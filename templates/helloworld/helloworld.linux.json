@@ -13,40 +13,40 @@
   "resources": [
     {
       "apiVersion": "2018-09-01-preview",
-      "name": "helloWorldNetwork",
+      "name": "functions-meshNetwork",
       "type": "Microsoft.ServiceFabricMesh/networks",
       "location": "[parameters('location')]",
       "dependsOn": [],
       "properties": {
         "kind": "Local",
-        "description": "Service Fabric Mesh Network for HelloWorld sample.",
+        "description": "Service Fabric Mesh Network for functions-mesh sample.",
         "networkAddressPrefix": "10.0.0.0/24"
       }
     },
     {
       "apiVersion": "2018-09-01-preview",
-      "name": "helloWorldGateway",
+      "name": "functions-meshGateway",
       "type": "Microsoft.ServiceFabricMesh/gateways",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.ServiceFabricMesh/networks/helloWorldNetwork"
+        "Microsoft.ServiceFabricMesh/networks/functions-meshNetwork"
       ],
       "properties": {
-        "description": "Service Fabric Mesh Gateway for HelloWorld sample.",
+        "description": "Service Fabric Mesh Gateway for functions-mesh sample.",
         "sourceNetwork": {
           "name": "Open"
         },
         "destinationNetwork": {
-          "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'helloWorldNetwork')]"
+          "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'functions-meshNetwork')]"
         },
         "tcp": [
           {
             "name": "web",
             "port": 80,
             "destination": {
-              "applicationName": "helloWorldApp",
-              "serviceName": "helloWorldService",
-              "endpointName": "helloWorldListener"
+              "applicationName": "functions-meshApp",
+              "serviceName": "functions-meshService",
+              "endpointName": "functions-meshListener"
             }
           }
         ]
@@ -54,41 +54,53 @@
     },
     {
       "apiVersion": "2018-09-01-preview",
-      "name": "helloWorldApp",
+      "name": "functions-meshApp",
       "type": "Microsoft.ServiceFabricMesh/applications",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.ServiceFabricMesh/networks/helloWorldNetwork"
+        "Microsoft.ServiceFabricMesh/networks/functions-meshNetwork"
       ],
       "properties": {
-        "description": "Service Fabric Mesh HelloWorld Application.",
+        "description": "Service Fabric Mesh functions-mesh Application.",
         "services": [
           {
             "type": "Microsoft.ServiceFabricMesh/services",
-            "name": "helloWorldService",
+            "name": "functions-meshService",
             "properties": {
-              "description": "Service Fabric Mesh Hello World Service.",
+              "description": "Service Fabric Mesh Functions Service.",
               "osType": "linux",
               "codePackages": [
                 {
-                  "name": "helloWorldCode",
-                  "image": "seabreeze/azure-mesh-helloworld:1.1-alpine",
+                  "name": "functions-meshCode",
+                  "image": "mcr.microsoft.com/azure-functions/mesh:4.8.0",
                   "endpoints": [
                     {
-                      "name": "helloWorldListener",
+                      "name": "functions-meshListener",
                       "port": "80"
                     }
                   ],
-                  "resources": {
-                    "requests": {
-                      "cpu": "1",
-                      "memoryInGB": "1"
-                    }
-                  }
-                },
-                {
-                  "name": "helloWorldSideCar",
-                  "image": "seabreeze/azure-mesh-helloworld-sidecar:1.0-alpine",
+				  "environmentVariables": [
+					{
+					  "key": "WEBSITE_PLACEHOLDER_MODE",
+					  "value": "1"
+					},
+					{
+					  "key": "AZURE_FUNCTIONS_ENVIRONMENT",
+					  "value": "production"
+					},
+					{
+					  "key": "CONTAINER_NAME",
+					  "value": "functions-mesh"
+					},
+					{
+					  "key": "Fabric_NodeIPOrFQDN",
+					  "value": "127.0.0.1"
+					},
+					{
+					  "key": "CONTAINER_ENCRYPTION_KEY",
+					  "value": "MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUY=" 
+					}
+				  ],				  
                   "resources": {
                     "requests": {
                       "cpu": "1",
@@ -100,10 +112,10 @@
               "replicaCount": "1",
               "networkRefs": [
                 {
-                  "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'helloWorldNetwork')]",
+                  "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'functions-meshNetwork')]",
                   "endpointRefs": [
                     {
-                      "name": "helloWorldListener"
+                      "name": "functions-meshListener"
                     }
                   ]
                 }
@@ -116,7 +128,7 @@
   ],
   "outputs": {
     "publicIPAddress": {
-      "value": "[reference('helloWorldGateway').ipAddress]",
+      "value": "[reference('functions-meshGateway').ipAddress]",
       "type": "string"
     }
   }
